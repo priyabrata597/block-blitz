@@ -46,8 +46,12 @@
 }
 
 .score-box h2 {
+  display: block;
   margin: 8px 0 0;
   font-size: 1.8rem;
+  color: #ffffff;
+  visibility: visible;
+  opacity: 1;
 }
 
 .board {
@@ -58,6 +62,9 @@
   border: 1px solid #344054;
   border-radius: 12px;
   background: #111927;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
 }
 
 .cell.occupied {
@@ -153,13 +160,39 @@
   background: #0e7490;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .game-container h1 {
-    font-size: 1.9rem;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+  }
+
+  .game-container {
+    padding: 20px 0;
   }
 
   .board {
     gap: 3px;
     padding: 6px;
+  }
+
+  .score-panel {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .score-box {
+    min-width: 0;
+    padding: 10px 6px;
+  }
+
+  .score-box h2 {
+    font-size: 1.5reml;
+  }
+
+  .score-box span {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
   }
 }
