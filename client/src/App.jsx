@@ -218,9 +218,7 @@ function App() {
         ))}
       </div>
 
-      {gameOver && <h2>GAME OVER!</h2>}
-
-      <h3 className="pieces-title">YOUR BLOCKS</h3>
+      {gameOver && <h2 className="game-over-message">GAME OVER!</h2>}
 
       <div className="pieces">
         {availablePieces.map((piece) => (

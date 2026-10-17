@@ -64,7 +64,10 @@
   background: #111927;
   width: 100%;
   max-width: 420px;
+  min-width: 0;
   box-sizing: border-box;
+  margin: 0 auto;
+  margin-bottom: 28px;
 }
 
 .cell.occupied {
@@ -76,12 +79,6 @@
   aspect-ratio: 1;
   border-radius: 4px;
   background: #263449;
-}
-
-.pieces-title {
-  margin: 26px 0 16px;
-  color: #cbd5e1;
-  letter-spacing: 2px;
 }
 
 .pieces {
@@ -195,4 +192,21 @@
     font-size: 0.75rem;
     letter-spacing: 1px;
   }
+}
+
+.game-over-message {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  flex: 1 1 100%;
+  box-sizing: border-box;
+  margin: 0 auto 28px;
+  padding: 16px;
+  border: 1px solid #67e8f9;
+  border-radius: 12px;
+  background: #182230;
+  color: #67e8f9;
+  font-size: 1.5rem;
+  letter-spacing: 2px;
+  text-align: center;
 }
