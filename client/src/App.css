@@ -79,6 +79,17 @@
   aspect-ratio: 1;
   border-radius: 4px;
   background: #263449;
+  touch-action: none;
+}
+
+.cell.preview-valid {
+  background: rgba(103, 232, 249, 0.5);
+  box-shadow: inset 0 0 0 2px #67e8f9;
+}
+
+.cell.preview-invalid {
+  background: rgba(248, 113, 113, 0.55);
+  box-shadow: inset 0 0 0 2px #f87171;
 }
 
 .pieces {
@@ -97,6 +108,9 @@
   cursor: pointer;
   padding: 5px;
   border-radius: 5px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .piece.selected {
@@ -209,4 +223,129 @@
   font-size: 1.5rem;
   letter-spacing: 2px;
   text-align: center;
+}
+
+.cell.clearing {
+  animation: line-clear 260ms ease-in-out forwards;
+  background: #ffffff;
+  box-shadow:
+    0 0 8px #67e8f9,
+    0 0 16px #22d3ee,
+    inset 0 0 8px #ffffff;
+  z-index: 1;
+}
+
+.cell.clearing.multi-clear {
+  animation: multi-line-clear 320ms ease-in-out forwards;
+}
+
+@keyframes line-clear {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    background: #67e8f9;
+  }
+
+  50% {
+    transform: scale(0.82);
+    opacity: 1;
+    background: #ffffff;
+  }
+
+  100% {
+    transform: scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes multi-line-clear {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    background: #67e8f9;
+    box-shadow: 0 0 4px #67e8f9;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+    background: #ffffff;
+    box-shadow: 0 0 18px #22d3ee;
+  }
+
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.clearing,
+  .cell.clearing.multi-clear {
+    animation-duration: 1ms;
+  }
+}
+
+.cell.occupied:not(.clearing) {
+  animation: block-place 160ms ease-out;
+}
+
+@keyframes block-place {
+  0% {
+    transform: scale(0.7);
+    filter: brightness(1.5);
+  }
+
+  70% {
+    transform: scale(1.08);
+    filter: brightness(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.occupied:not(.clearing) {
+    animation: none;
+  }
+}
+
+.piece-single {
+  --piece-color: #ff6b6b;
+}
+
+.piece-domino {
+  --piece-color: #4dabf7;
+}
+
+.piece-line3,
+.piece-line4,
+.piece-line5 {
+  --piece-color: #51cf66;
+}
+
+.piece-square {
+  --piece-color: #ffd43b;
+}
+
+.piece-L,
+.piece-reversal {
+  --piece-color: #cc5de8;
+}
+
+.piece-T,
+.piece-smallT {
+  --piece-color: #ff922b;
+}
+
+.piece-corner {
+  --piece-color: #20c997;
+}
+
+.piece .piece-cell,
+.piece .block {
+  background-color: var(--piece-color);
 }
