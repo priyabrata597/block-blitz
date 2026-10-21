@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { checkBackend } from "./api";
+import { submitGameResult } from "./api";
+
 const pieceColors = {
   single: "#ff6b6b",
   domino: "#4dabf7",
@@ -100,13 +102,20 @@ function App() {
     return false;
   }
 
-  function finishGame(finalScore) {
+  async function finishGame(finalScore) {
     setGameOver(true);
     setSelectedPiece(null);
     setPreviewIndex(null);
     const updatedBest = Math.max(bestScore, finalScore);
     setBestScore(updatedBest);
     localStorage.setItem("blockBlitzBest", String(updatedBest));
+
+    try {
+      const result = await submitGameResult(finalScore, updatedBest);
+      console.log("Game result saved to backend:", result.message);
+    } catch (error) {
+      console.error("Failed to send game result:", error);
+    }
   }
 
   function handleDragStart(event, pieceId) {

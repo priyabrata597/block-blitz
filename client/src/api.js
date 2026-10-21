@@ -7,3 +7,19 @@ export async function checkBackend() {
     }
     return response.json();
 }
+
+export async function submitGameResult(score, bestScore) {
+    const response = await
+    fetch ("http://localhost:5000/api/score", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ score, bestScore}),
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to submit game result");
+    }
+    return response.json();
+}
