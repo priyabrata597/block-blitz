@@ -45,3 +45,13 @@ export async function getDashboard(playerName) {
 
   return response.json();
 }
+
+export async function getLeaderboard() {
+  const response = await fetch(`${API_BASE_URL}/leaderboard`);
+
+  if (!response.ok) {
+    throw new Error("Failed to load leaderboard");
+  }
+
+  return response.json();
+}

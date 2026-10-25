@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import { checkBackend, submitGameResult, getDashboard } from "./api";
+import {
+  checkBackend,
+  submitGameResult,
+  getDashboard,
+  getLeaderboard,
+} from "./api";
 
 const pieceColors = {
   single: "#ff6b6b",
@@ -17,9 +22,11 @@ const pieceColors = {
 };
 
 function App() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("blockblitzTheme") || "dark");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("blockblitzTheme") || "dark",
+  );
 
-  useEffect(()=> {
+  useEffect(() => {
     document.body.dataset.theme = theme;
     localStorage.setItem("blockblitzTheme", theme);
   }, [theme]);
@@ -45,6 +52,9 @@ function App() {
     bestScore: 0,
     totalGames: 0,
   });
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState("");
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState("");
 
@@ -113,6 +123,21 @@ function App() {
     }
   }
 
+  async function loadLeaderboard() {
+    setLeaderboardLoading(true);
+    setLeaderboardError("");
+
+    try {
+      const data = await getLeaderboard();
+      setLeaderboard(data.leaderboard || []);
+    } catch (error) {
+      console.error("Leaderboard loading failed:", error);
+      setLeaderboardError("Could not load the global leaderboard.");
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }
+
   async function handlePlayerSubmit(event) {
     event.preventDefault();
 
@@ -129,6 +154,7 @@ function App() {
 
     if (loaded) {
       setScreen("dashboard");
+      await loadLeaderboard();
     }
   }
 
@@ -312,150 +338,156 @@ function App() {
   }
 
   function placePiece(index, pieceId = selectedPiece) {
-  if (!pieceId || gameOver || isClearing) return;
+    if (!pieceId || gameOver || isClearing) return;
 
-  const pieceData = availablePieces.find(
-    (piece) => piece.id === pieceId
-  );
-  if (!pieceData) return;
+    const pieceData = availablePieces.find((piece) => piece.id === pieceId);
+    if (!pieceData) return;
 
-  const shape = pieceShapes[pieceData.name];
-  const anchorRow = Math.floor(index / 8);
-  const anchorCol = index % 8;
+    const shape = pieceShapes[pieceData.name];
+    const anchorRow = Math.floor(index / 8);
+    const anchorCol = index % 8;
 
-  const positions = getShapeCells(shape).map(({ row, col }) => ({
-    row: anchorRow + row,
-    col: anchorCol + col,
-  }));
+    const positions = getShapeCells(shape).map(({ row, col }) => ({
+      row: anchorRow + row,
+      col: anchorCol + col,
+    }));
 
-  const valid = positions.every(({ row, col }) =>
-    row >= 0 &&
-    row < 8 &&
-    col >= 0 &&
-    col < 8 &&
-    board[row * 8 + col] === 0
-  );
-
-  if (!valid) {
-    setPreviewIndex(index);
-    return;
-  }
-
-  const updatedBoard = [...board];
-
-  positions.forEach(({ row, col }) => {
-    updatedBoard[row * 8 + col] = {
-      filled: true,
-      color: pieceColors[pieceData.name] || "#4dabf7",
-    };
-  });
-
-  const fullRows = [];
-  const fullCols = [];
-
-  for (let row = 0; row < 8; row++) {
-    if (
-      updatedBoard
-        .slice(row * 8, row * 8 + 8)
-        .every((cell) => cell !== 0 && cell.filled)
-    ) {
-      fullRows.push(row);
-    }
-  }
-
-  for (let col = 0; col < 8; col++) {
-    if (
-      updatedBoard.every(
-        (cell, i) => i % 8 !== col || (cell !== 0 && cell.filled)
-      )
-    ) {
-      fullCols.push(col);
-    }
-  }
-
-  const cellsToClear = new Set();
-
-  fullRows.forEach((row) => {
-    for (let col = 0; col < 8; col++) {
-      cellsToClear.add(row * 8 + col);
-    }
-  });
-
-  fullCols.forEach((col) => {
-    for (let row = 0; row < 8; row++) {
-      cellsToClear.add(row * 8 + col);
-    }
-  });
-
-  const clearedCellIndexes = [...cellsToClear];
-  const nextBoard = [...updatedBoard];
-
-  clearedCellIndexes.forEach((cellIndex) => {
-    nextBoard[cellIndex] = 0;
-  });
-
-  const linesCleared = fullRows.length + fullCols.length;
-  const nextScore = score + shape.length + linesCleared * 10;
-
-  setScore(nextScore);
-  setSelectedPiece(null);
-  setPreviewIndex(null);
-
-  const remainingPieces = availablePieces.filter(
-    (piece) => piece.id !== pieceId
-  );
-
-  const nextPieces =
-    remainingPieces.length === 0 ? generatePiece() : remainingPieces;
-
-  setAvailablePieces(nextPieces);
-
-  const checkGameOver = () => {
-    console.log("Check game over function created");
-    const hasValidMove = nextPieces.some((piece) =>
-      canPieceFit(pieceShapes[piece.name], nextBoard)
+    const valid = positions.every(
+      ({ row, col }) =>
+        row >= 0 &&
+        row < 8 &&
+        col >= 0 &&
+        col < 8 &&
+        board[row * 8 + col] === 0,
     );
 
-    console.log("Game-over check:", {
-      pieces: nextPieces.map((piece) => piece.name), hasValidMove,
-      boardFillled: nextBoard.filter((cell) => cell !== 0).length,
+    if (!valid) {
+      setPreviewIndex(index);
+      return;
+    }
+
+    const updatedBoard = [...board];
+
+    positions.forEach(({ row, col }) => {
+      updatedBoard[row * 8 + col] = {
+        filled: true,
+        color: pieceColors[pieceData.name] || "#4dabf7",
+      };
     });
 
-    if (!hasValidMove) {
-      console.log("No valid moves. Triggering game over.");
-      finishGame(nextScore);
+    const fullRows = [];
+    const fullCols = [];
+
+    for (let row = 0; row < 8; row++) {
+      if (
+        updatedBoard
+          .slice(row * 8, row * 8 + 8)
+          .every((cell) => cell !== 0 && cell.filled)
+      ) {
+        fullRows.push(row);
+      }
     }
-  };
 
-  if (clearedCellIndexes.length > 0) {
-    setIsClearing(true);
-    setClearingCells(clearedCellIndexes);
-    setMultiClear(linesCleared >= 2);
-    setBoard(updatedBoard);
+    for (let col = 0; col < 8; col++) {
+      if (
+        updatedBoard.every(
+          (cell, i) => i % 8 !== col || (cell !== 0 && cell.filled),
+        )
+      ) {
+        fullCols.push(col);
+      }
+    }
 
-    clearTimer.current = setTimeout(() => {
+    const cellsToClear = new Set();
+
+    fullRows.forEach((row) => {
+      for (let col = 0; col < 8; col++) {
+        cellsToClear.add(row * 8 + col);
+      }
+    });
+
+    fullCols.forEach((col) => {
+      for (let row = 0; row < 8; row++) {
+        cellsToClear.add(row * 8 + col);
+      }
+    });
+
+    const clearedCellIndexes = [...cellsToClear];
+    const nextBoard = [...updatedBoard];
+
+    clearedCellIndexes.forEach((cellIndex) => {
+      nextBoard[cellIndex] = 0;
+    });
+
+    const linesCleared = fullRows.length + fullCols.length;
+    const nextScore = score + shape.length + linesCleared * 10;
+
+    setScore(nextScore);
+    setSelectedPiece(null);
+    setPreviewIndex(null);
+
+    const remainingPieces = availablePieces.filter(
+      (piece) => piece.id !== pieceId,
+    );
+
+    const nextPieces =
+      remainingPieces.length === 0 ? generatePiece() : remainingPieces;
+
+    setAvailablePieces(nextPieces);
+
+    const checkGameOver = () => {
+      console.log("Check game over function created");
+      const hasValidMove = nextPieces.some((piece) =>
+        canPieceFit(pieceShapes[piece.name], nextBoard),
+      );
+
+      console.log("Game-over check:", {
+        pieces: nextPieces.map((piece) => piece.name),
+        hasValidMove,
+        boardFillled: nextBoard.filter((cell) => cell !== 0).length,
+      });
+
+      if (!hasValidMove) {
+        console.log("No valid moves. Triggering game over.");
+        finishGame(nextScore);
+      }
+    };
+
+    if (clearedCellIndexes.length > 0) {
+      setIsClearing(true);
+      setClearingCells(clearedCellIndexes);
+      setMultiClear(linesCleared >= 2);
+      setBoard(updatedBoard);
+
+      clearTimer.current = setTimeout(
+        () => {
+          setBoard(nextBoard);
+          setClearingCells([]);
+          setMultiClear(false);
+          setIsClearing(false);
+          clearTimer.current = null;
+
+          checkGameOver();
+        },
+        linesCleared >= 2 ? 320 : 260,
+      );
+    } else {
       setBoard(nextBoard);
-      setClearingCells([]);
-      setMultiClear(false);
-      setIsClearing(false);
-      clearTimer.current = null;
-
       checkGameOver();
-    }, linesCleared >= 2 ? 320 : 260);
-  } else {
-    setBoard(nextBoard);
-    checkGameOver();
+    }
   }
-}
 
   if (screen === "entry") {
     return (
       <main className="game-container">
         <h1>BLOCK BLITZ</h1>
-        <button className="theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
-            {theme === "dark" ? "Light mode" : "Dark mode"}
-          </button>
+        <button
+          className="theme-toggle"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+        >
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </button>
         <p className="subtitle">Place blocks. Clear lines. Beat your best.</p>
 
         <form className="player-card" onSubmit={handlePlayerSubmit}>
@@ -511,7 +543,37 @@ function App() {
             </div>
           </div>
 
-          
+          <section className="leaderboard-section">
+            <h2>GLOBAL LEADERBOARD</h2>
+            <p>Top 10 players by best score</p>
+
+            {leaderboardLoading && <p>Loading leaderboard...</p>}
+
+            {leaderboardError && (
+              <p className="dashboard-error">{leaderboardError}</p>
+            )}
+
+            {!leaderboardLoading &&
+              !leaderboardError &&
+              (leaderboard.length === 0 ? (
+                <p>No scores recorded yet.</p>
+              ) : (
+                <div className="leaderboard-list">
+                  {leaderboard.map((player, index) => (
+                    <div
+                      className="leaderboard-row"
+                      key={`${player.playerName}-${index}`}
+                    >
+                      <span className="leaderboard-rank">#{index + 1}</span>
+                      <span className="leaderboard-name">
+                        {player.playerName || "Player"}
+                      </span>
+                      <strong>{player.bestScore}</strong>
+                    </div>
+                  ))}
+                </div>
+              ))}
+          </section>
 
           {dashboardError && (
             <p className="dashboard-error">{dashboardError}</p>
@@ -552,28 +614,28 @@ function App() {
       </div>
 
       {gameOver && (
-            <div className="game-over-message">
-              <h2>GAME OVER!</h2>
-              <p>Player: {playerName}</p>
-              <p>Final Score: {score}</p>
-              <p>Best Score: {bestScore}</p>
+        <div className="game-over-message">
+          <h2>GAME OVER!</h2>
+          <p>Player: {playerName}</p>
+          <p>Final Score: {score}</p>
+          <p>Best Score: {bestScore}</p>
 
-              <button className="restart-button" onClick={startNewGame}>
-                PLAY AGAIN
-              </button>
+          <button className="restart-button" onClick={startNewGame}>
+            PLAY AGAIN
+          </button>
 
-              <button
-                className="secondary-button"
-                onClick={() => setScreen("dashboard")}
-              >
-                DASHBOARD
-              </button>
+          <button
+            className="secondary-button"
+            onClick={() => setScreen("dashboard")}
+          >
+            DASHBOARD
+          </button>
 
-              <button className="secondary-button" onClick={changePlayer}>
-                CHANGE PLAYER
-              </button>
-            </div>
-          )}
+          <button className="secondary-button" onClick={changePlayer}>
+            CHANGE PLAYER
+          </button>
+        </div>
+      )}
 
       <div className="board">
         {board.map((cell, index) => {

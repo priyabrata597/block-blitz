@@ -107,6 +107,47 @@ app.get("/api/dashboard", async (req, res) => {
   }
 });
 
+// Global leaderboard
+app.get("/api/leaderboard", async (req, res) => {
+  try {
+    const leaderboard = await GameResult.aggregate([
+      {
+        $group: {
+          _id: { $toLower: { $trim: { input: "$playerName" } } },
+          playerName: { $first: "$playerName" },
+          bestScore: {
+            $max: { $max: ["$score", "$bestScore"] }
+          }
+        }
+      },
+      {
+        $sort: { bestScore: -1, playerName: 1 }
+      },
+      {
+        $limit: 10
+      },
+      {
+        $project: {
+          _id: 0,
+          playerName: 1,
+          bestScore: 1
+        }
+      }
+    ]);
+
+    return res.json({
+      success: true,
+      leaderboard
+    });
+  } catch (error) {
+    console.error("Error loading leaderboard:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load leaderboard."
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`BLOCK BLITZ backend running on port ${PORT}`);
 });

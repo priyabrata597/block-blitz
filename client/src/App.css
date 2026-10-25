@@ -607,3 +607,49 @@ body[data-theme="light"] .cell.preview-valid {
   outline: 2px solid #0891b2;
   outline-offset: 3px;
 }
+
+.leaderboard-section {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.leaderboard-section > h2 {
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.leaderboard-section > p {
+  color: var(--muted-color);
+  text-align: center;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--secondary-bg);
+}
+
+.leaderboard-rank {
+  min-width: 30px;
+  font-weight: 700;
+}
+
+.leaderboard-name {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.leaderboard-row strong {
+  font-variant-numeric: tabular-nums;
+}
