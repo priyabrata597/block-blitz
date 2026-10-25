@@ -38,9 +38,20 @@ html,
 body,
 #root {
   width: 100%;
-  min-height: 100%;
+  min-height: 100vh;
   margin: 0;
   background-color: var(--page-bg);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--page-bg);
+  overflow-x: clip;
+}
+
+#root {
+  min-height: 100vh;
+  background: var(--page-bg);
 }
 
 *,
