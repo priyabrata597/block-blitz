@@ -21,10 +21,168 @@ const pieceColors = {
   corner: "#20c997",
 };
 
+let audioContext;
+
+let musicNodes = [];
+let musicTimer = null;
+
+function startBackgroundMusic() {
+try {
+const AudioContextClass =
+window.AudioContext || window.webkitAudioContext;
+
+if (!AudioContextClass) return;
+
+if (!audioContext) {
+  audioContext = new AudioContextClass();
+}
+
+if (musicTimer !== null) return;
+
+const playNote = () => {
+  if (!audioContext || audioContext.state === "closed") return;
+
+  const now = audioContext.currentTime;
+  const notes = [261.63, 329.63, 392, 329.63, 293.66, 349.23, 440, 349.23];
+  const note = notes[Math.floor(Math.random() * notes.length)];
+
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(note, now);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.025, now + 0.4);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+
+  oscillator.start(now);
+  oscillator.stop(now + 2.5);
+
+  musicNodes.push(oscillator);
+  oscillator.onended = () => {
+    musicNodes = musicNodes.filter((node) => node !== oscillator);
+  };
+};
+
+if (audioContext.state === "suspended") {
+  audioContext.resume();
+}
+
+playNote();
+musicTimer = window.setInterval(playNote, 2200);
+
+} catch (error) {
+console.warn("Background music unavailable:", error);
+}
+}
+
+function stopBackgroundMusic() {
+if (musicTimer !== null) {
+window.clearInterval(musicTimer);
+musicTimer = null;
+}
+
+musicNodes.forEach((node) => {
+try {
+node.stop();
+} catch {
+// The note may already have stopped.
+}
+});
+
+musicNodes = [];
+}
+
+function playGameSound(type) {
+if (localStorage.getItem("blockBlitzSound") === "off") return;
+
+try {
+const AudioContextClass =
+window.AudioContext || window.webkitAudioContext;
+
+if (!AudioContextClass) return;
+
+if (!audioContext) {
+  audioContext = new AudioContextClass();
+}
+
+if (audioContext.state === "suspended") {
+  audioContext.resume();
+}
+
+const sounds = {
+  click: { frequency: 520, duration: 0.05, wave: "sine" },
+  place: { frequency: 380, duration: 0.09, wave: "triangle" },
+  clear: { frequency: 720, duration: 0.16, wave: "sine" },
+  combo: { frequency: 920, duration: 0.22, wave: "sine" },
+  gameover: { frequency: 180, duration: 0.35, wave: "triangle" },
+};
+
+const sound = sounds[type];
+if (!sound) return;
+
+const oscillator = audioContext.createOscillator();
+const gain = audioContext.createGain();
+
+oscillator.type = sound.wave;
+oscillator.frequency.setValueAtTime(
+  sound.frequency,
+  audioContext.currentTime,
+);
+
+gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+gain.gain.exponentialRampToValueAtTime(
+  0.12,
+  audioContext.currentTime + 0.015,
+);
+gain.gain.exponentialRampToValueAtTime(
+  0.0001,
+  audioContext.currentTime + sound.duration,
+);
+
+oscillator.connect(gain);
+gain.connect(audioContext.destination);
+
+oscillator.start();
+oscillator.stop(audioContext.currentTime + sound.duration);
+
+} catch (error) {
+console.warn("Audio playback unavailable:", error);
+}
+}
+
 function App() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("blockblitzTheme") || "dark",
   );
+
+  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem("blockBlitzSound") !== "off",);
+
+  const [musicEnabled, setMusicEnabled] = useState(
+  () => localStorage.getItem("blockBlitzMusic") !== "off",
+);
+
+useEffect(() => {
+  localStorage.setItem("blockBlitzMusic", musicEnabled ? "on" : "off");
+
+  if (musicEnabled) {
+    startBackgroundMusic();
+  } else {
+    stopBackgroundMusic();
+  }
+
+  return () => {
+    stopBackgroundMusic();
+  };
+}, [musicEnabled]);
+
+  useEffect (() => {
+    localStorage.setItem("blockBlitzSound", soundEnabled ? "on" : "off");
+  }, [soundEnabled]);
 
   useEffect(() => {
     document.body.dataset.theme = theme;
@@ -239,6 +397,7 @@ function App() {
     gameSaved.current = true;
 
     setGameOver(true);
+    playGameSound("gameover");
     setSelectedPiece(null);
     setPreviewIndex(null);
 
@@ -366,6 +525,8 @@ function App() {
       return;
     }
 
+    playGameSound("place");
+
     const updatedBoard = [...board];
 
     positions.forEach(({ row, col }) => {
@@ -420,6 +581,14 @@ function App() {
     });
 
     const linesCleared = fullRows.length + fullCols.length;
+
+    if (linesCleared >= 2){
+      playGameSound("combo");
+    }
+    else if(linesCleared === 1){
+      playGameSound("clear");
+    }
+
     const nextScore = score + shape.length + linesCleared * 10;
 
     setScore(nextScore);
@@ -579,7 +748,10 @@ function App() {
             <p className="dashboard-error">{dashboardError}</p>
           )}
 
-          <button className="restart-button" onClick={startNewGame}>
+          <button className="restart-button" onClick={() => {
+            playGameSound("click");
+            startNewGame();
+          }}>
             START PLAYING
           </button>
 
@@ -600,6 +772,14 @@ function App() {
     >
       <h1>BLOCK BLITZ</h1>
       <p className="subtitle">Playing as {playerName}</p>
+
+      <button className="secondary-button" onClick={() => setSoundEnabled((previous) => !previous)}>
+        {soundEnabled ? "SOUND ON" : "SOUND OFF"}
+      </button>
+
+      <button className="secondary-button" onClick={() => setMusicEnabled((previous) => !previous)}>
+        {musicEnabled ? "MUSIC ON" : "MUSIC OFF"}
+      </button>
 
       <div className="score-panel">
         <div className="score-box">
