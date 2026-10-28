@@ -76,10 +76,8 @@ Install the following:
 
 1. Clone the Repository
 
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/priyabrata597/block-blitz.git
 cd Block-blitz
-
-Replace "YOUR_GITHUB_REPOSITORY_URL" with the actual URL of this repository.
 
 2. Configure the Backend
 
@@ -120,8 +118,6 @@ Open the local URL printed by Vite in your browser.
 
 Keep both development servers running while testing the application.
 
-«API configuration: The frontend currently uses a local backend URL in "client/src/api.js". Before production deployment, configure it to use the deployed backend URL instead.»
-
 🔌 Backend API Endpoints
 
 Method| Endpoint| Purpose| Authentication
@@ -156,27 +152,18 @@ BLOCK BLITZ is deployed using separate frontend and backend services, with Mongo
 - Backend: Render
 - Database: MongoDB Atlas
 
-Live Application
+### Live Application
 
 Play the game: https://block-blitz-rddsoige4-priyabrata-s-project.vercel.app/
 
-Deployment Configuration
+### Deployment Configuration
 
-- The frontend uses "VITE_API_BASE_URL" to connect to the deployed backend API.
-- The backend uses environment variables for configuration, including the MongoDB connection string and JWT secret.
-- CORS is configured to allow requests from the frontend.
-- MongoDB Atlas provides persistent database storage.
+- Frontend API URL: Configure "VITE_API_BASE_URL" in the Vercel project environment variables to point to the deployed backend API base URL, ending in "/api".
+- Backend configuration: Set "MONGODB_URI" and "JWT_SECRET" as environment variables in Render. Configure "PORT" as required by the hosting environment.
+- Cross-Origin Resource Sharing (CORS): Configure the backend to allow requests from the deployed frontend origin.
+- Database: MongoDB Atlas stores user accounts and game results persistently.
 
-Security note: Keep secrets and credentials in environment variables. Never commit ".env" files or expose database credentials or JWT secrets in the repository.
-
-🔒 Security Notes
-
-- Store database credentials and JWT secrets in environment variables.
-- Never publish ".env" files or private credentials.
-- Use HTTPS for production traffic.
-- Configure CORS to allow the intended frontend origin in production.
-- Use a strong JWT secret and keep it private.
-- Restrict database network access appropriately.
+Security: Never commit ".env" files or expose database credentials, JWT secrets, or other private environment variables in the repository.
 
 🔮 Potential Future Improvements
 
