@@ -150,17 +150,24 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 ☁️ Deployment
 
-The application can be deployed using separate services for the frontend and backend, with MongoDB Atlas providing the database.
-
-Planned deployment setup:
+BLOCK BLITZ is deployed using separate frontend and backend services, with MongoDB Atlas providing database storage.
 
 - Frontend: Vercel
 - Backend: Render
 - Database: MongoDB Atlas
 
-Before deploying, configure the production API URL, backend environment variables, CORS settings, and MongoDB Atlas network access.
+Live Application
 
-Live application and deployment URLs will be added here after deployment is completed and verified.
+Play the game: https://block-blitz-rddsoige4-priyabrata-s-project.vercel.app/
+
+Deployment Configuration
+
+- The frontend uses "VITE_API_BASE_URL" to connect to the deployed backend API.
+- The backend uses environment variables for configuration, including the MongoDB connection string and JWT secret.
+- CORS is configured to allow requests from the frontend.
+- MongoDB Atlas provides persistent database storage.
+
+Security note: Keep secrets and credentials in environment variables. Never commit ".env" files or expose database credentials or JWT secrets in the repository.
 
 🔒 Security Notes
 
