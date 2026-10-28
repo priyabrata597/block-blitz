@@ -184,4 +184,16 @@ The application is deployed, and the live game has been tested successfully.
 - Database: MongoDB Atlas
 - Live Demo: https://block-blitz-rddsoige4-priyabrata-s-project.vercel.app/
 
+
+## 📸 Screenshots
+
+### Gameplay
+![BLOCK BLITZ Gameplay](screenshots/gameplay.png)
+
+### Dashboard
+![BLOCK BLITZ Dashboard](screenshots/dashboard.png)
+
+### Global Leaderboard
+![BLOCK BLITZ Leaderboard](screenshots/leaderboard.png)
+
 Built as a learning and development project.
