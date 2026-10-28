@@ -2,6 +2,12 @@
 
 BLOCK BLITZ is a browser-based block puzzle game built with React, Vite, Node.js, Express, and MongoDB. Place blocks on an 8×8 grid, clear complete rows and columns, earn points, and compete for a place on the global leaderboard.
 
+🎮 Live Demo
+
+Play BLOCK BLITZ: https://block-blitz-rddsoige4-priyabrata-s-project.vercel.app/
+
+Experience the game directly in your browser.
+
 ✨ Features
 
 - 8×8 Game Board — Place blocks strategically without overlapping occupied cells.
