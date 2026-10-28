@@ -181,10 +181,13 @@ Live application and deployment URLs will be added here after deployment is comp
 
 📌 Project Status
 
-BLOCK BLITZ includes a React frontend, an Express backend, MongoDB persistence, account authentication, dashboard statistics, and a global leaderboard.
+BLOCK BLITZ is a full-stack block puzzle game featuring a React frontend, an Express backend, MongoDB persistence, account authentication, dashboard statistics, and a global leaderboard.
 
-Production deployment and live URL verification are pending.
+The application is deployed, and the live game has been tested successfully.
 
----
+- Frontend: Deployed on Vercel
+- Backend: Deployed on Render
+- Database: MongoDB Atlas
+- Live Demo: https://block-blitz-rddsoige4-priyabrata-s-project.vercel.app/
 
 Built as a learning and development project.
