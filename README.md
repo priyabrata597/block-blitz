@@ -188,12 +188,12 @@ The application is deployed, and the live game has been tested successfully.
 ## 📸 Screenshots
 
 ### Gameplay
-![BLOCK BLITZ Gameplay](screenshots/gameplay.png)
+![BLOCK BLITZ Gameplay](Screenshots/gameplay.png)
 
 ### Dashboard
-![BLOCK BLITZ Dashboard](screenshots/dashboard.png)
+![BLOCK BLITZ Dashboard](Screenshots/dashboard.png)
 
 ### Global Leaderboard
-![BLOCK BLITZ Leaderboard](screenshots/leaderboard.png)
+![BLOCK BLITZ Leaderboard](Screenshots/leaderboard.png)
 
 Built as a learning and development project.
