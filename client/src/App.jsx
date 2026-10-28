@@ -5,6 +5,9 @@ import {
   submitGameResult,
   getDashboard,
   getLeaderboard,
+  registerUser,
+  loginUser,
+  getCurrentUser,
 } from "./api";
 
 const pieceColors = {
@@ -27,132 +30,128 @@ let musicNodes = [];
 let musicTimer = null;
 
 function startBackgroundMusic() {
-try {
-const AudioContextClass =
-window.AudioContext || window.webkitAudioContext;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 
-if (!AudioContextClass) return;
+    if (!AudioContextClass) return;
 
-if (!audioContext) {
-  audioContext = new AudioContextClass();
-}
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+    }
 
-if (musicTimer !== null) return;
+    if (musicTimer !== null) return;
 
-const playNote = () => {
-  if (!audioContext || audioContext.state === "closed") return;
+    const playNote = () => {
+      if (!audioContext || audioContext.state === "closed") return;
 
-  const now = audioContext.currentTime;
-  const notes = [261.63, 329.63, 392, 329.63, 293.66, 349.23, 440, 349.23];
-  const note = notes[Math.floor(Math.random() * notes.length)];
+      const now = audioContext.currentTime;
+      const notes = [261.63, 329.63, 392, 329.63, 293.66, 349.23, 440, 349.23];
+      const note = notes[Math.floor(Math.random() * notes.length)];
 
-  const oscillator = audioContext.createOscillator();
-  const gain = audioContext.createGain();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
 
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(note, now);
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(note, now);
 
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.025, now + 0.4);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.025, now + 0.4);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
 
-  oscillator.connect(gain);
-  gain.connect(audioContext.destination);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
 
-  oscillator.start(now);
-  oscillator.stop(now + 2.5);
+      oscillator.start(now);
+      oscillator.stop(now + 2.5);
 
-  musicNodes.push(oscillator);
-  oscillator.onended = () => {
-    musicNodes = musicNodes.filter((node) => node !== oscillator);
-  };
-};
+      musicNodes.push(oscillator);
+      oscillator.onended = () => {
+        musicNodes = musicNodes.filter((node) => node !== oscillator);
+      };
+    };
 
-if (audioContext.state === "suspended") {
-  audioContext.resume();
-}
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
 
-playNote();
-musicTimer = window.setInterval(playNote, 2200);
-
-} catch (error) {
-console.warn("Background music unavailable:", error);
-}
+    playNote();
+    musicTimer = window.setInterval(playNote, 2200);
+  } catch (error) {
+    console.warn("Background music unavailable:", error);
+  }
 }
 
 function stopBackgroundMusic() {
-if (musicTimer !== null) {
-window.clearInterval(musicTimer);
-musicTimer = null;
-}
+  if (musicTimer !== null) {
+    window.clearInterval(musicTimer);
+    musicTimer = null;
+  }
 
-musicNodes.forEach((node) => {
-try {
-node.stop();
-} catch {
-// The note may already have stopped.
-}
-});
+  musicNodes.forEach((node) => {
+    try {
+      node.stop();
+    } catch {
+      // The note may already have stopped.
+    }
+  });
 
-musicNodes = [];
+  musicNodes = [];
 }
 
 function playGameSound(type) {
-if (localStorage.getItem("blockBlitzSound") === "off") return;
+  if (localStorage.getItem("blockBlitzSound") === "off") return;
 
-try {
-const AudioContextClass =
-window.AudioContext || window.webkitAudioContext;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 
-if (!AudioContextClass) return;
+    if (!AudioContextClass) return;
 
-if (!audioContext) {
-  audioContext = new AudioContextClass();
-}
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+    }
 
-if (audioContext.state === "suspended") {
-  audioContext.resume();
-}
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
 
-const sounds = {
-  click: { frequency: 520, duration: 0.05, wave: "sine" },
-  place: { frequency: 380, duration: 0.09, wave: "triangle" },
-  clear: { frequency: 720, duration: 0.16, wave: "sine" },
-  combo: { frequency: 920, duration: 0.22, wave: "sine" },
-  gameover: { frequency: 180, duration: 0.35, wave: "triangle" },
-};
+    const sounds = {
+      click: { frequency: 520, duration: 0.05, wave: "sine" },
+      place: { frequency: 380, duration: 0.09, wave: "triangle" },
+      clear: { frequency: 720, duration: 0.16, wave: "sine" },
+      combo: { frequency: 920, duration: 0.22, wave: "sine" },
+      gameover: { frequency: 180, duration: 0.35, wave: "triangle" },
+    };
 
-const sound = sounds[type];
-if (!sound) return;
+    const sound = sounds[type];
+    if (!sound) return;
 
-const oscillator = audioContext.createOscillator();
-const gain = audioContext.createGain();
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
 
-oscillator.type = sound.wave;
-oscillator.frequency.setValueAtTime(
-  sound.frequency,
-  audioContext.currentTime,
-);
+    oscillator.type = sound.wave;
+    oscillator.frequency.setValueAtTime(
+      sound.frequency,
+      audioContext.currentTime,
+    );
 
-gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-gain.gain.exponentialRampToValueAtTime(
-  0.12,
-  audioContext.currentTime + 0.015,
-);
-gain.gain.exponentialRampToValueAtTime(
-  0.0001,
-  audioContext.currentTime + sound.duration,
-);
+    gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.12,
+      audioContext.currentTime + 0.015,
+    );
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioContext.currentTime + sound.duration,
+    );
 
-oscillator.connect(gain);
-gain.connect(audioContext.destination);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
 
-oscillator.start();
-oscillator.stop(audioContext.currentTime + sound.duration);
-
-} catch (error) {
-console.warn("Audio playback unavailable:", error);
-}
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + sound.duration);
+  } catch (error) {
+    console.warn("Audio playback unavailable:", error);
+  }
 }
 
 function App() {
@@ -160,27 +159,29 @@ function App() {
     () => localStorage.getItem("blockblitzTheme") || "dark",
   );
 
-  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem("blockBlitzSound") !== "off",);
+  const [soundEnabled, setSoundEnabled] = useState(
+    () => localStorage.getItem("blockBlitzSound") !== "off",
+  );
 
   const [musicEnabled, setMusicEnabled] = useState(
-  () => localStorage.getItem("blockBlitzMusic") !== "off",
-);
+    () => localStorage.getItem("blockBlitzMusic") !== "off",
+  );
 
-useEffect(() => {
-  localStorage.setItem("blockBlitzMusic", musicEnabled ? "on" : "off");
+  useEffect(() => {
+    localStorage.setItem("blockBlitzMusic", musicEnabled ? "on" : "off");
 
-  if (musicEnabled) {
-    startBackgroundMusic();
-  } else {
-    stopBackgroundMusic();
-  }
+    if (musicEnabled) {
+      startBackgroundMusic();
+    } else {
+      stopBackgroundMusic();
+    }
 
-  return () => {
-    stopBackgroundMusic();
-  };
-}, [musicEnabled]);
+    return () => {
+      stopBackgroundMusic();
+    };
+  }, [musicEnabled]);
 
-  useEffect (() => {
+  useEffect(() => {
     localStorage.setItem("blockBlitzSound", soundEnabled ? "on" : "off");
   }, [soundEnabled]);
 
@@ -206,6 +207,11 @@ useEffect(() => {
   const [screen, setScreen] = useState("entry");
   const [nameInput, setNameInput] = useState("");
   const [playerName, setPlayerName] = useState("");
+  const [authMode, setAuthMode] = useState("login");
+  const [emailInput, setEmailInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
   const [dashboard, setDashboard] = useState({
     bestScore: 0,
     totalGames: 0,
@@ -213,7 +219,6 @@ useEffect(() => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState("");
-  const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState("");
 
   const [selectedPiece, setSelectedPiece] = useState(null);
@@ -238,6 +243,43 @@ useEffect(() => {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      const token = localStorage.getItem("blockBlitzToken");
+
+      if (!token) return;
+
+      try {
+        const current = await getCurrentUser(token);
+
+        if (cancelled) return;
+
+        setPlayerName(current.user.name);
+        setNameInput(current.user.name);
+
+        const loaded = await loadDashboard(current.user.name);
+
+        if (cancelled || !loaded) return;
+
+        setScreen("dashboard");
+        await loadLeaderboard();
+      } catch (error) {
+        if (cancelled) return;
+
+        localStorage.removeItem("blockBlitzToken");
+        console.error("Session restoration failed:", error);
+      }
+    }
+
+    restoreSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (clearTimer.current !== null) {
         clearTimeout(clearTimer.current);
@@ -255,11 +297,10 @@ useEffect(() => {
   }
 
   async function loadDashboard(name) {
-    setDashboardLoading(true);
     setDashboardError("");
 
     try {
-      const data = await getDashboard(name);
+      const data = await getDashboard();
       setDashboard({
         bestScore: data.bestScore,
         totalGames: data.totalGames,
@@ -276,8 +317,6 @@ useEffect(() => {
         "Could not load your dashboard. Check that the backend and MongoDB are running.",
       );
       return false;
-    } finally {
-      setDashboardLoading(false);
     }
   }
 
@@ -296,23 +335,63 @@ useEffect(() => {
     }
   }
 
-  async function handlePlayerSubmit(event) {
+  async function handleAuthSubmit(event) {
     event.preventDefault();
+    setAuthError("");
 
-    const name = nameInput.trim();
+    const email = emailInput.trim().toLowerCase();
+    const password = passwordInput;
 
-    if (!name) {
-      setDashboardError("Please enter your player name.");
+    if (!email || !password) {
+      setAuthError("Please enter your email and password.");
       return;
     }
 
-    setPlayerName(name);
+    if (authMode === "register") {
+      const name = nameInput.trim();
 
-    const loaded = await loadDashboard(name);
+      if (name.length < 2 || name.length > 40) {
+        setAuthError("Name must be between 2 and 40 characters.");
+        return;
+      }
+    }
 
-    if (loaded) {
-      setScreen("dashboard");
-      await loadLeaderboard();
+    setAuthLoading(true);
+
+    try {
+      if (authMode === "register") {
+        await registerUser(nameInput.trim(), email, password);
+
+        setAuthMode("login");
+        setPasswordInput("");
+        setAuthError("Account created! Please log in.");
+        return;
+      }
+
+      const data = await loginUser(email, password);
+      const token = data.token;
+
+      if (!token) {
+        throw new Error("The server did not return an authentication token.");
+      }
+
+      localStorage.setItem("blockBlitzToken", token);
+
+      const current = await getCurrentUser(token);
+
+      setPlayerName(current.user.name);
+      setNameInput(current.user.name);
+
+      const loaded = await loadDashboard(current.user.name);
+
+      if (loaded) {
+        setScreen("dashboard");
+        await loadLeaderboard();
+      }
+    } catch (error) {
+      setAuthError(error.message || "Authentication failed.");
+    } finally {
+      setAuthLoading(false);
     }
   }
 
@@ -408,10 +487,11 @@ useEffect(() => {
     localStorage.setItem(key, String(updatedBest));
 
     try {
-      await submitGameResult(playerName, finalScore, updatedBest);
+      await submitGameResult(finalScore);
       console.log("Game result saved to backend.");
 
       await loadDashboard(playerName);
+      await loadLeaderboard();
     } catch (error) {
       console.error("Failed to save game result:", error);
       setDashboardError(
@@ -582,10 +662,9 @@ useEffect(() => {
 
     const linesCleared = fullRows.length + fullCols.length;
 
-    if (linesCleared >= 2){
+    if (linesCleared >= 2) {
       playGameSound("combo");
-    }
-    else if(linesCleared === 1){
+    } else if (linesCleared === 1) {
       playGameSound("clear");
     }
 
@@ -650,6 +729,7 @@ useEffect(() => {
     return (
       <main className="game-container">
         <h1>BLOCK BLITZ</h1>
+
         <button
           className="theme-toggle"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -657,34 +737,85 @@ useEffect(() => {
         >
           {theme === "dark" ? "Light mode" : "Dark mode"}
         </button>
+
         <p className="subtitle">Place blocks. Clear lines. Beat your best.</p>
 
-        <form className="player-card" onSubmit={handlePlayerSubmit}>
-          <h2>Welcome, Player!</h2>
-          <p>Enter your name to view your dashboard and play.</p>
+        <form className="player-card" onSubmit={handleAuthSubmit}>
+          <h2>{authMode === "login" ? "Welcome Back!" : "Create Account"}</h2>
+
+          <p>
+            {authMode === "login"
+              ? "Log in to access your dashboard and play."
+              : "Register to create your BLOCK BLITZ account."}
+          </p>
+
+          {authMode === "register" && (
+            <input
+              className="player-input"
+              type="text"
+              value={nameInput}
+              onChange={(event) => setNameInput(event.target.value)}
+              placeholder="Your name"
+              minLength={2}
+              maxLength={40}
+              autoComplete="name"
+              required
+            />
+          )}
 
           <input
             className="player-input"
-            type="text"
-            value={nameInput}
-            onChange={(event) => setNameInput(event.target.value)}
-            placeholder="Enter your player name"
-            maxLength={30}
-            autoComplete="off"
+            type="email"
+            value={emailInput}
+            onChange={(event) => setEmailInput(event.target.value)}
+            placeholder="Email address"
+            autoComplete="email"
             required
           />
 
-          {dashboardError && (
-            <p className="dashboard-error">{dashboardError}</p>
-          )}
+          <input
+            className="player-input"
+            type="password"
+            value={passwordInput}
+            onChange={(event) => setPasswordInput(event.target.value)}
+            placeholder="Password (at least 8 characters)"
+            minLength={8}
+            maxLength={72}
+            autoComplete={
+              authMode === "login" ? "current-password" : "new-password"
+            }
+            required
+          />
+
+          {authError && <p className="dashboard-error">{authError}</p>}
 
           <button
             className="restart-button"
             type="submit"
-            disabled={dashboardLoading}
+            disabled={authLoading}
           >
-            {dashboardLoading ? "LOADING..." : "CONTINUE"}
+            {authLoading
+              ? "PLEASE WAIT..."
+              : authMode === "login"
+                ? "LOG IN"
+                : "CREATE ACCOUNT"}
           </button>
+
+          <p>
+            {authMode === "login"
+              ? "New player? "
+              : "Already have an account? "}
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={() => {
+                setAuthMode(authMode === "login" ? "register" : "login");
+                setAuthError("");
+              }}
+            >
+              {authMode === "login" ? "Register" : "Log in"}
+            </button>
+          </p>
         </form>
       </main>
     );
@@ -748,10 +879,13 @@ useEffect(() => {
             <p className="dashboard-error">{dashboardError}</p>
           )}
 
-          <button className="restart-button" onClick={() => {
-            playGameSound("click");
-            startNewGame();
-          }}>
+          <button
+            className="restart-button"
+            onClick={() => {
+              playGameSound("click");
+              startNewGame();
+            }}
+          >
             START PLAYING
           </button>
 
@@ -773,11 +907,17 @@ useEffect(() => {
       <h1>BLOCK BLITZ</h1>
       <p className="subtitle">Playing as {playerName}</p>
 
-      <button className="secondary-button" onClick={() => setSoundEnabled((previous) => !previous)}>
+      <button
+        className="secondary-button"
+        onClick={() => setSoundEnabled((previous) => !previous)}
+      >
         {soundEnabled ? "SOUND ON" : "SOUND OFF"}
       </button>
 
-      <button className="secondary-button" onClick={() => setMusicEnabled((previous) => !previous)}>
+      <button
+        className="secondary-button"
+        onClick={() => setMusicEnabled((previous) => !previous)}
+      >
         {musicEnabled ? "MUSIC ON" : "MUSIC OFF"}
       </button>
 

@@ -1,57 +1,112 @@
 const API_BASE_URL = "http://localhost:5000/api";
 
+// Get the saved authentication token
+function getAuthHeaders() {
+  const token = localStorage.getItem("blockBlitzToken");
+
+  if (!token) {
+    throw new Error("Your session has expired. Please log in again.");
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+// Read an API response and report meaningful errors
+async function readResponse(response, fallbackMessage) {
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || fallbackMessage);
+  }
+
+  return data;
+}
+
+// Check backend availability
 export async function checkBackend() {
   const response = await fetch(`${API_BASE_URL}/health`);
 
-  if (!response.ok) {
-    throw new Error("Backend connection failed");
-  }
-
-  return response.json();
+  return readResponse(response, "Backend connection failed.");
 }
 
-export async function submitGameResult(
-  playerName,
-  score,
-  bestScore
-) {
+// Submit a game result for the logged-in user
+export async function submitGameResult(score) {
   const response = await fetch(`${API_BASE_URL}/Score`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      score,
+    }),
+  });
+
+  // return readResponse(response, "Failed to submit game result.");
+
+  const data = await readResponse( response, "Failed to submit game reault.",);
+  console.log("Saved game result:", data.result);
+  return data;
+}
+
+// Load dashboard statistics for the logged-in user
+export async function getDashboard() {
+  const response = await fetch(`${API_BASE_URL}/dashboard`, {
+    headers: getAuthHeaders(),
+  });
+
+  return readResponse(response, "Failed to load dashboard.");
+}
+
+// Load the public global leaderboard
+export async function getLeaderboard() {
+  const response = await fetch(`${API_BASE_URL}/leaderboard`);
+
+  return readResponse(response, "Failed to load leaderboard.");
+}
+
+// Register a new account
+export async function registerUser(name, email, password) {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      playerName,
-      score,
-      bestScore,
+      name,
+      email,
+      password,
     }),
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to submit game result");
-  }
-
-  return response.json();
+  return readResponse(response, "Registration failed.");
 }
 
-export async function getDashboard(playerName) {
-  const response = await fetch(
-    `${API_BASE_URL}/dashboard?playerName=${encodeURIComponent(playerName)}`
-  );
+// Log in to an existing account
+export async function loginUser(email, password) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  });
 
-  if (!response.ok) {
-    throw new Error("Failed to load dashboard");
-  }
-
-  return response.json();
+  return readResponse(response, "Login failed.");
 }
 
-export async function getLeaderboard() {
-  const response = await fetch(`${API_BASE_URL}/leaderboard`);
+// Get the currently authenticated user
+export async function getCurrentUser(token) {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-  if (!response.ok) {
-    throw new Error("Failed to load leaderboard");
-  }
-
-  return response.json();
+  return readResponse(response, "Unable to retrieve user.");
 }
