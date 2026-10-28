@@ -2,3 +2,5 @@
 .env.*
 !.env.example
 server/node_modules/
+node_modules/
+dist/
